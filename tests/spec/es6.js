@@ -1,9 +1,8 @@
-describe("ES5/ES6 Shim", function () {
-    var str = "To be, or not to be, that is the question.";
+describe("ES6 Features", function () {
 
-    var untrimmed_str = " start and end with white space ";
+    describe("String functions :", function () {
+        var str = "To be, or not to be, that is the question.";
 
-    describe("the String 'To be, or not to be, that is the question.'", function () {
         it("contains 'To Be'", function () {
             expect(str.includes("To be")).toEqual(true);
         });
@@ -23,22 +22,6 @@ describe("ES5/ES6 Shim", function () {
         it("does not contain 'TO BE'", function () {
             expect(str.includes("TO BE")).toEqual(false);
         });
-
-    });
-
-    describe("trimming functions :", function () {
-        it("trim both sides", function () {
-            expect(untrimmed_str.trim()).toEqual("start and end with white space");
-        });
-
-        it("trim left side", function () {
-            expect(untrimmed_str.trimLeft()).toEqual("start and end with white space ");
-        });
-
-        it("trim right side", function () {
-            expect(untrimmed_str.trimRight()).toEqual(" start and end with white space");
-        });
-
     });
 
     describe("math functions :", function () {
@@ -52,5 +35,4 @@ describe("ES5/ES6 Shim", function () {
             expect(Math.sign(0)).toEqual(0);
         });
     });
-
 });

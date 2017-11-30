@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -199,7 +199,7 @@
          * @function
          * @memberOf me.utils
          * @name decodeCSV
-         * @param  {String} input CSV formatted data
+         * @param  {String} input CSV formatted data (only numbers, everything else will be converted to NaN)
          * @return {Number[]} Decoded data
          */
         api.decodeCSV = function (input) {

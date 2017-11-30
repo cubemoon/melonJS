@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -79,6 +79,12 @@
         });
 
         /**
+         * cache value for the offset of the canvas position within the page
+         * @ignore
+         */
+        api._canvasOffset = null;
+
+        /**
          * Select the HTML5 Canvas renderer
          * @public
          * @name CANVAS
@@ -118,7 +124,7 @@
          * @function
          * @param {Number} width the width of the canvas viewport
          * @param {Number} height the height of the canvas viewport
-         * @param {Object} [options] The optional video/renderer parameters
+         * @param {Object} [options] The optional video/renderer parameters.<br> (see Renderer(s) documentation for further specific options)
          * @param {String} [options.wrapper=document.body] the "div" element name to hold the canvas in the HTML file
          * @param {Number} [options.renderer=me.video.CANVAS] renderer to use.
          * @param {Boolean} [options.doubleBuffering=false] enable/disable double buffering
@@ -129,6 +135,8 @@
          * @param {Boolean} [options.transparent=false] whether to allow transparent pixels in the front buffer (screen)
          * @param {Boolean} [options.antiAlias=false] whether to enable or not video scaling interpolation
          * @return {Boolean} false if initialization failed (canvas not supported)
+         * @see me.CanvasRenderer
+         * @see me.WebGLRenderer
          * @example
          * // init the video with a 640x480 canvas
          * me.video.init(640, 480, {
@@ -194,6 +202,8 @@
                 ),
                 false
             );
+
+            // Screen Orientation API
             window.addEventListener(
                 "orientationchange",
                 function (event) {
@@ -201,6 +211,30 @@
                 },
                 false
             );
+            // pre-fixed implementation on mozzila
+            window.addEventListener(
+                "onmozorientationchange",
+                function (event) {
+                    me.event.publish(me.event.WINDOW_ONORIENTATION_CHANGE, [ event ]);
+                },
+                false
+            );
+            if (typeof window.screen !== "undefined") {
+                // is this one required ?
+                window.screen.onorientationchange = function (event) {
+                    me.event.publish(me.event.WINDOW_ONORIENTATION_CHANGE, [ event ]);
+                };
+            }
+
+            // Automatically update relative canvas position on scroll
+            window.addEventListener("scroll", throttle(100, false,
+                function (e) {
+                    // invalidate the current canvas position cache so that it
+                    // get recalculated the next time getPos is called
+                    api._canvasOffset = null;
+                    me.event.publish(me.event.WINDOW_ONSCROLL, [ e ]);
+                }
+            ), false);
 
             // register to the channel
             me.event.subscribe(
@@ -283,14 +317,18 @@
          * @memberOf me.video
          * @function
          * @param {Canvas} [canvas] system one if none specified
-         * @return {me.Vector2d}
+         * @return {DOMRect}
          */
         api.getPos = function (c) {
-            c = c || this.renderer.getScreenCanvas();
-            return (
-                c.getBoundingClientRect ?
-                c.getBoundingClientRect() : { left : 0, top : 0 }
-            );
+            if (typeof c === "undefined") {
+                if (api._canvasOffset === null) {
+                    c = this.renderer.getScreenCanvas();
+                    api._canvasOffset = c && c.getBoundingClientRect ? c.getBoundingClientRect() : { left : 0, top : 0 };
+                }
+                return api._canvasOffset;
+            } else  {
+                return c.getBoundingClientRect ? c.getBoundingClientRect() : { left : 0, top : 0 };
+            }
         };
 
         /**
@@ -357,19 +395,6 @@
         api.onresize = function () {
             // default (no scaling)
             var scaleX = 1, scaleY = 1;
-
-            // check for orientation information
-            if (typeof window.orientation !== "undefined") {
-                me.device.orientation = window.orientation;
-            }
-            else {
-                // is this actually not the best option since default "portrait"
-                // orientation might vary between for example an ipad and and android tab
-                me.device.orientation = (
-                    window.outerWidth > window.outerHeight ?
-                    90 : 0
-                );
-            }
 
             if (settings.autoScale) {
                 var parentNodeWidth;
@@ -480,8 +505,9 @@
             this.renderer.scaleCanvas(scaleX, scaleY);
             me.game.repaint();
 
-            // make sure we have the correct relative canvas position cached
-            me.input._offset = me.video.getPos();
+            // invalidate the current canvas position cache so that it
+            // get recalculated the next time getPos is called
+            api._canvasOffset = null;
 
             // clear the timeout id
             deferResizeId = 0;

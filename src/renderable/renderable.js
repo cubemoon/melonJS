@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -29,6 +29,16 @@
              * @ignore
              */
             this.isRenderable = true;
+
+            /**
+             * If true then collisions and input events will no more impact this renderable
+             * @public
+             * @type me.Boolean
+             * @default false
+             * @name isKinematic
+             * @memberOf me.Renderable
+             */
+            this.isKinematic = false;
 
             /**
              * the renderable default transformation matrix
@@ -120,11 +130,11 @@
             this.anchorPoint = new me.Vector2d(0.5, 0.5);
 
             /**
-             * [EXPERIMENTAL] when enabled, an object container will automatically
-             * apply any defined transformation before calling the child draw method.
+             * When enabled, an object container will automatically apply
+             * any defined transformation before calling the child draw method.
              * @public
              * @type Boolean
-             * @default false
+             * @default true
              * @name autoTransform
              * @memberOf me.Renderable
              * @example
@@ -146,7 +156,7 @@
              *     return this._super(me.Entity, 'update', [dt]);
              * },
              */
-            this.autoTransform = false;
+            this.autoTransform = true;
 
             /**
              * Define the renderable opacity<br>
@@ -214,6 +224,12 @@
             this._width = width;
             this._height = height;
 
+            // keep track of when we flip
+            this._flip = {
+                lastX : false,
+                lastY : false
+            };
+
             this.shapeType = "Rectangle";
 
             // ensure it's fully opaque by default
@@ -253,9 +269,41 @@
             if (typeof (alpha) === "number") {
                 this.alpha = alpha.clamp(0.0, 1.0);
                 // Set to 1 if alpha is NaN
-                if (this.alpha !== this.alpha) {
+                if (isNaN(this.alpha)) {
                     this.alpha = 1.0;
                 }
+            }
+        },
+
+        /**
+         * flip the renderable on the horizontal axis, using negative transform scale
+         * @see me.Matrix2d.scaleX
+         * @name flipX
+         * @memberOf me.Renderable
+         * @function
+         * @param {Boolean} flip enable/disable flip
+         */
+        flipX : function (flip) {
+            if (flip !== this._flip.lastX) {
+                this._flip.lastX = flip;
+                // invert the scale.x value
+                this.currentTransform.scaleX(-1);
+            }
+        },
+
+        /**
+         * flip the renderable on the vertical axis, using negative transform scale
+         * @see me.Matrix2d.scaleY
+         * @name flipY
+         * @memberOf me.Renderable
+         * @function
+         * @param {Boolean} flip enable/disable flip
+         */
+        flipY : function (flip) {
+            if (flip !== this._flip.lastY) {
+                this._flip.lastY = flip;
+                // invert the scale.x value
+                this.currentTransform.scaleY(-1);
             }
         },
 
@@ -310,8 +358,8 @@
         },
 
         /**
-         * update function
-         * called by the game manager on each game loop
+         * update function. <br>
+         * automatically called by the game manager {@link me.game}
          * @name update
          * @memberOf me.Renderable
          * @function
@@ -319,7 +367,7 @@
          * @param {Number} dt time since the last update in milliseconds.
          * @return false
          **/
-        update : function () {
+        update : function (/* dt */) {
             return false;
         },
 
@@ -354,8 +402,40 @@
         },
 
         /**
-         * object draw
-         * called by the game manager on each game loop
+         * prepare the rendering context before drawing
+         * (apply defined transforms, anchor point). <br>
+         * automatically called by the game manager {@link me.game}
+         * @name preDraw
+         * @memberOf me.Renderable
+         * @function
+         * @protected
+         * @param {me.CanvasRenderer|me.WebGLRenderer} renderer a renderer object
+         **/
+        preDraw : function (renderer) {
+            var bounds = this.getBounds();
+            var ax = bounds.width * this.anchorPoint.x,
+                ay = bounds.height * this.anchorPoint.y;
+
+            // save context
+            renderer.save();
+            // apply the defined alpha value
+            renderer.setGlobalAlpha(renderer.globalAlpha() * this.getOpacity());
+
+            if ((this.autoTransform === true) && (!this.currentTransform.isIdentity())) {
+                this.currentTransform.translate(-ax, -ay);
+                // apply the renderable transformation matrix
+                renderer.transform(this.currentTransform);
+                this.currentTransform.translate(ax, ay);
+            } else {
+                // translate to the defined anchor point
+                renderer.translate(-ax, -ay);
+            }
+
+        },
+
+        /**
+         * object draw. <br>
+         * automatically called by the game manager {@link me.game}
          * @name draw
          * @memberOf me.Renderable
          * @function
@@ -364,6 +444,20 @@
          **/
         draw : function (/*renderer*/) {
             // empty one !
+        },
+
+        /**
+         * restore the rendering context after drawing. <br>
+         * automatically called by the game manager {@link me.game}
+         * @name postDraw
+         * @memberOf me.Renderable
+         * @function
+         * @protected
+         * @param {me.CanvasRenderer|me.WebGLRenderer} renderer a renderer object
+         **/
+        postDraw : function (renderer) {
+            // restore the context
+            renderer.restore();
         },
 
         /**

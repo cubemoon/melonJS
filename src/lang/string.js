@@ -1,6 +1,6 @@
 /**
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  */
 
@@ -11,24 +11,6 @@
  */
 
 /* eslint-disable no-extend-native, yoda */
-
-if (!String.prototype.trim) {
-    if (!String.prototype.trim) {
-      (function() {
-        // Make sure we trim BOM and NBSP
-        var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-        /**
-         * removes whitespace from both ends of a string. Whitespace in this context is all the whitespace characters (space, tab, no-break space, etc.) and all the line terminator characters (LF, CR, etc.).
-         * @memberof! external:String#
-         * @alias trim
-         * @return {string} the string stripped of whitespace from both ends.
-         */
-        String.prototype.trim = function() {
-          return this.replace(rtrim, "");
-        };
-      })();
-    }
-}
 
 if (!String.prototype.trimLeft) {
     /**
@@ -85,10 +67,17 @@ if (!String.prototype.includes) {
      * @param {number} [position=0] The position in this string at which to begin searching for the given string.
      * @return {boolean} true if contains the specified string
      */
-  String.prototype.includes = function() {
-    return String.prototype.indexOf.apply(this, arguments) !== -1;
-  };
-}
+    String.prototype.includes = function(search, start) {
+        if (typeof start !== "number") {
+            start = 0;
+        }
+        if (start + search.length > this.length) {
+            return false;
+        } else {
+            return this.indexOf(search, start) !== -1;
+        }
+    };
+};
 
 /**
  * convert the string to hex value

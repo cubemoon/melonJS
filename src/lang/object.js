@@ -1,6 +1,6 @@
 /**
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  */
 
@@ -10,57 +10,16 @@
  * @see {@link https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object|Object}
  */
 
+/**
+ * The base class from which all melonJS objects inherit.
+ * See: {@link https://github.com/parasyte/jay-extend}
+ * @class
+ * @extends external:Object#
+ * @memberOf me
+ */
+me.Object = window.Jay;
+
 /* eslint-disable no-self-compare */
-
-if (!Object.defineProperty) {
-    /**
-     * simple defineProperty function definition (if not supported by the browser)<br>
-     * if defineProperty is redefined, internally use __defineGetter__/__defineSetter__ as fallback
-     * @param {Object} obj The object on which to define the property.
-     * @param {string} prop The name of the property to be defined or modified.
-     * @param {Object} desc The descriptor for the property being defined or modified.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty|Object.defineProperty}
-     */
-    Object.defineProperty = function (obj, prop, desc) {
-        // check if Object support __defineGetter function
-        if (obj.__defineGetter__) {
-            if (desc.get) {
-                obj.__defineGetter__(prop, desc.get);
-            }
-            if (desc.set) {
-                obj.__defineSetter__(prop, desc.set);
-            }
-        } else {
-            // we should never reach this point....
-            throw new TypeError("Object.defineProperty not supported");
-        }
-    };
-}
-
-if (!Object.create) {
-    /**
-     * Prototypal Inheritance Create Helper
-     * @name create
-     * @memberOf external:Object#
-     * @function
-     * @param {Object} o
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create|Object.create}
-     * @example
-     * // declare oldObject
-     * oldObject = new Object();
-     * // make some crazy stuff with oldObject (adding functions, etc...)
-     * // ...
-     *
-     * // make newObject inherits from oldObject
-     * newObject = Object.create(oldObject);
-     */
-    Object.create = function (o) {
-        var Fn = function () {};
-        Fn.prototype = o;
-        return new Fn();
-    };
-}
-
 if (!Object.is) {
     /**
      * The Object.is() method determines whether two values are the same value.
@@ -148,171 +107,5 @@ if (!Object.assign) {
             return output;
         };
     })();
-}
-
-/**
- * Extend a class prototype with the provided mixin descriptors.
- * Designed as a faster replacement for John Resig's Simple Inheritance.
- * @name extend
- * @memberOf me.Object
- * @function
- * @param {Object[]} mixins... Each mixin is a dictionary of functions, or a
- * previously extended class whose methods will be applied to the target class
- * prototype.
- * @return {Object}
- * @example
- * var Person = me.Object.extend({
- *     "init" : function (isDancing) {
- *         this.dancing = isDancing;
- *     },
- *     "dance" : function () {
- *         return this.dancing;
- *     }
- * });
- *
- * var Ninja = Person.extend({
- *     "init" : function () {
- *         // Call the super constructor, passing a single argument
- *         this._super(Person, "init", [false]);
- *     },
- *     "dance" : function () {
- *         // Call the overridden dance() method
- *         return this._super(Person, "dance");
- *     },
- *     "swingSword" : function () {
- *         return true;
- *     }
- * });
- *
- * var Pirate = Person.extend(Ninja, {
- *     "init" : function () {
- *         // Call the super constructor, passing a single argument
- *         this._super(Person, "init", [true]);
- *     }
- * });
- *
- * var p = new Person(true);
- * console.log(p.dance()); // => true
- *
- * var n = new Ninja();
- * console.log(n.dance()); // => false
- * console.log(n.swingSword()); // => true
- *
- * var r = new Pirate();
- * console.log(r.dance()); // => true
- * console.log(r.swingSword()); // => true
- *
- * console.log(
- *     p instanceof Person &&
- *     n instanceof Ninja &&
- *     n instanceof Person &&
- *     r instanceof Pirate &&
- *     r instanceof Person
- * ); // => true
- *
- * console.log(r instanceof Ninja); // => false
- */
-(function () {
-    function extend() {
-        var methods = {};
-        var mixins = new Array(arguments.length);
-        for (var i = 0; i < arguments.length; i++) {
-            mixins.push(arguments[i]);
-        }
-
-        /**
-         * The class constructor which calls the user `init` constructor.
-         * @ignore
-         */
-        function Class() {
-            // Call the user constructor
-            this.init.apply(this, arguments);
-            return this;
-        }
-
-        // Apply superClass
-        Class.prototype = Object.create(this.prototype);
-
-        // Apply all mixin methods to the class prototype
-        mixins.forEach(function (mixin) {
-            apply_methods(Class, methods, mixin.__methods__ || mixin);
-        });
-
-        // Verify constructor exists
-        if (!("init" in Class.prototype)) {
-            throw new TypeError(
-                "extend: Class is missing a constructor named `init`"
-            );
-        }
-
-        // Apply syntactic sugar for accessing methods on super classes
-        Object.defineProperty(Class.prototype, "_super", {
-            "value" : _super
-        });
-
-        // Create a hidden property on the class itself
-        // List of methods, used for applying classes as mixins
-        Object.defineProperty(Class, "__methods__", {
-            "value" : methods
-        });
-
-        // Make this class extendable
-        Class.extend = extend;
-
-        return Class;
-    }
-
-    /**
-     * Apply methods to the class prototype.
-     * @ignore
-     */
-    function apply_methods(Class, methods, descriptor) {
-        Object.keys(descriptor).forEach(function (method) {
-            methods[method] = descriptor[method];
-
-            if (typeof(descriptor[method]) !== "function") {
-                throw new TypeError(
-                    "extend: Method `" + method + "` is not a function"
-                );
-            }
-
-            Object.defineProperty(Class.prototype, method, {
-                "configurable" : true,
-                "value" : descriptor[method]
-            });
-        });
-    }
-
-    /**
-     * Special method that acts as a proxy to the super class.
-     * @name _super
-     * @ignore
-     */
-    function _super(superClass, method, args) {
-        return superClass.prototype[method].apply(this, args);
-    }
-
-    /**
-     * The base class from which all jay-extend classes inherit.
-     * @ignore
-     */
-    var Jay = function () {
-        Object.apply(this, arguments);
-    };
-    Jay.prototype = Object.create(Object.prototype);
-    Jay.prototype.constructor = Jay;
-
-    Object.defineProperty(Jay, "extend", {
-        "value" : extend
-    });
-
-    /**
-     * The base class from which all melonJS objects inherit.
-     * See: {@link https://github.com/parasyte/jay-extend}
-     * @class
-     * @extends external:Object#
-     * @memberOf me
-     */
-    me.Object = Jay;
-})();
+};
 /* eslint-enable no-self-compare */

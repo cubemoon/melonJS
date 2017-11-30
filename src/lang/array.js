@@ -1,6 +1,6 @@
 /**
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  */
 
@@ -25,32 +25,6 @@ Array.prototype.remove = function (obj) {
     }
     return this;
 };
-
-if (!Array.prototype.forEach) {
-    /**
-     * provide a replacement for browsers that don't
-     * support Array.prototype.forEach (JS 1.6)
-     * @ignore
-     */
-    Array.prototype.forEach = function (callback, scope) {
-        for (var i = 0, j = this.length; j--; i++) {
-            callback.call(scope || this, this[i], i, this);
-        }
-    };
-}
-
-if (!Array.isArray) {
-    /**
-     * provide a replacement for browsers that don't
-     * natively support Array.isArray
-     * @ignore
-     */
-    Array.isArray = function (vArg) {
-        var isArray;
-        isArray = vArg instanceof Array;
-        return isArray;
-    };
-}
 
 /**
  * return a random array element

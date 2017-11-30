@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -123,8 +123,8 @@
          * @ignore
          */
         clicked : function (event) {
-            // Check if left mouse button is pressed OR if device has touch
-            if ((event.which === 1 || me.device.touch) && this.isClickable) {
+            // Check if left mouse button is pressed
+            if (event.button === 0 && this.isClickable) {
                 this.updated = true;
                 this.released = false;
                 if (this.isHoldable) {

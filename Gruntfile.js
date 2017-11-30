@@ -4,7 +4,7 @@ module.exports = function (grunt) {
 
 
   var sourceFiles = grunt.file.readJSON("sourceFiles.json");
-  var testSpecs = grunt.file.readJSON("testSpecs.json");
+  var testSpecs = "tests/spec/**/*.js";
 
   var quadFragment = "<%= grunt.file.read('build/glsl/quad-fragment.glsl') %>";
   var quadVertex = "<%= grunt.file.read('build/glsl/quad-vertex.glsl') %>";
@@ -16,7 +16,7 @@ module.exports = function (grunt) {
     pkg : grunt.file.readJSON("package.json"),
     path : {
       main : "build/<%= pkg.name %>.js",
-      min : "build/<%= pkg.name %>-min.js"
+      min : "build/<%= pkg.name %>.min.js"
     },
 
     concat : {
@@ -193,15 +193,6 @@ module.exports = function (grunt) {
       }
     },
 
-    jasmine : {
-      src : "<%= path.main %>",
-      options : {
-        specs : testSpecs,
-        helpers : [ "tests/spec/helper-spec.js" ],
-        host : "http://localhost:8001/"
-      }
-    },
-
     connect : {
       server : {
         options : {
@@ -222,7 +213,8 @@ module.exports = function (grunt) {
         expand : true,
         src : [
           "index.html",
-          "build/melonJS.js",
+          "build/melonjs.js",
+          "build/melonjs.min.js",
           "docs/**",
           "examples/**",
           "media/logo.png",
@@ -241,18 +233,26 @@ module.exports = function (grunt) {
           pull : true
         }
       }
+    },
+
+    karma: {
+      unit: {
+        configFile: "karma.conf.js",
+        browsers: ["ChromeHeadless"] //other supported options are Chrome and ChromeHeadless
+      }
     }
+
   });
 
   grunt.loadNpmTasks("grunt-contrib-clean");
   grunt.loadNpmTasks("grunt-contrib-concat");
   grunt.loadNpmTasks("grunt-contrib-connect");
   grunt.loadNpmTasks("grunt-contrib-copy");
-  grunt.loadNpmTasks("grunt-contrib-jasmine");
   grunt.loadNpmTasks("grunt-eslint");
   grunt.loadNpmTasks("grunt-contrib-uglify");
   grunt.loadNpmTasks("grunt-build-gh-pages");
   grunt.loadNpmTasks("grunt-jsdoc");
+  grunt.loadNpmTasks("grunt-karma");
   grunt.loadNpmTasks("grunt-replace");
 
   // Custom Tasks
@@ -270,7 +270,7 @@ module.exports = function (grunt) {
     "eslint:afterConcat"
   ]);
   grunt.registerTask("doc", [ "replace:docs", "jsdoc" ]);
-  grunt.registerTask("test", [ "lint", "connect:server", "jasmine" ]);
+  grunt.registerTask("test", [ "lint", "karma" ]);
   grunt.registerTask("serve", [ "connect:keepalive" ]);
   grunt.registerTask("gh-pages", [
     "test",

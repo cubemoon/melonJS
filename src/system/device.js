@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -43,8 +43,8 @@
             }
 
             // future proofing (MS) feature detection
-            me.device.pointerEvent = me.agent.prefixed("PointerEvent", window);
-            me.device.maxTouchPoints = me.agent.prefixed("maxTouchPoints", navigator) || 0;
+            me.device.pointerEvent = window.PointerEvent;
+            me.device.maxTouchPoints = navigator.maxTouchPoints || 0;
             window.gesture = me.agent.prefixed("gesture");
 
             // detect touch capabilities
@@ -70,9 +70,15 @@
                 document.exitPointerLock = me.agent.prefixed("exitPointerLock", document);
             }
 
-            // device motion detection
+            // device orientation and motion detection
             if (window.DeviceOrientationEvent) {
                 me.device.hasDeviceOrientation = true;
+            }
+            if (typeof window.screen !== "undefined") {
+                var screen = window.screen;
+                screen.orientation = me.agent.prefixed("orientation", screen);
+                screen.lockOrientation = me.agent.prefixed("lockOrientation", screen);
+                screen.unlockOrientation = me.agent.prefixed("unlockOrientation", screen);
             }
 
             // fullscreen api detection & polyfill when possible
@@ -380,19 +386,6 @@
         api.Kindle = false;
 
         /**
-         * The device current orientation status. <br>
-         *   0 : default orientation<br>
-         *  90 : 90 degrees clockwise from default<br>
-         * -90 : 90 degrees anti-clockwise from default<br>
-         * 180 : 180 degrees from default
-         * @type Number
-         * @readonly
-         * @name orientation
-         * @memberOf me.device
-         */
-        api.orientation = 0;
-
-        /**
          * contains the g-force acceleration along the x-axis.
          * @public
          * @type Number
@@ -546,6 +539,100 @@
                 devicePixelRatio = _devicePixelRatio / _backingStoreRatio;
             }
             return devicePixelRatio;
+        };
+
+        /**
+         * Return a string representing the orientation of the device screen.
+         * It can be "any", "natural", "landscape", "portrait", "portrait-primary", "portrait-secondary", "landscape-primary", "landscape-secondary"
+         * @name getScreenOrientation
+         * @memberOf me.device
+         * @see https://developer.mozilla.org/en-US/docs/Web/API/Screen/orientation
+         * @function
+         * @return {String} the screen orientation
+         */
+        api.getScreenOrientation = function () {
+            var PORTRAIT = "portrait";
+            var LANDSCAPE = "landscape";
+
+            var screen = window.screen;
+
+            // first try using "standard" values
+            if (typeof screen !== "undefined") {
+                var orientation = screen.orientation
+                if ((typeof orientation !== "undefined") && typeof (orientation.type === "string")) {
+                    // Screen Orientation API specification
+                    return orientation.type;
+                } else if (typeof orientation === "string") {
+                    // moz/ms-orientation are strings
+                    return orientation;
+                }
+            }
+
+            // check using the deprecated API
+            if (typeof window.orientation === "number") {
+                return (Math.abs(window.orientation) === 90) ? LANDSCAPE : PORTRAIT;
+            }
+
+            // fallback to window size check
+            return (window.outerWidth > window.outerHeight) ? LANDSCAPE : PORTRAIT;
+        };
+
+        /**
+         * locks the device screen into the specified orientation.<br>
+         * This method only works for installed Web apps or for Web pages in full-screen mode.
+         * @name lockOrientation
+         * @memberOf me.device
+         * @see https://developer.mozilla.org/en-US/docs/Web/API/Screen/lockOrientation
+         * @function
+         * @return {Boolean} true if the orientation was unsuccessfully locked
+         */
+        api.lockOrientation = function (orientation) {
+            if (typeof window.screen !== "undefined") {
+                if (typeof screen.lockOrientation !== "undefined") {
+                    return screen.lockOrientation(orientation);
+                }
+            }
+            return false;
+        };
+
+        /**
+         * unlocks the device screen into the specified orientation.<br>
+         * This method only works for installed Web apps or for Web pages in full-screen mode.
+         * @name unlockOrientation
+         * @memberOf me.device
+         * @see https://developer.mozilla.org/en-US/docs/Web/API/Screen/lockOrientation
+         * @function
+         * @return {Boolean} true if the orientation was unsuccessfully unlocked
+         */
+        api.unlockOrientation = function (orientation) {
+            if (typeof window.screen !== "undefined") {
+                if (typeof screen.unlockOrientation !== "undefined") {
+                    return screen.unlockOrientation(orientation);
+                }
+            }
+            return false;
+        };
+
+        /**
+         * return true if the device screen orientation is in Portrait mode
+         * @name isPortrait
+         * @memberOf me.device
+         * @function
+         * @return {Boolean}
+         */
+        api.isPortrait = function () {
+            return me.device.getScreenOrientation().includes("portrait");
+        };
+
+        /**
+         * return true if the device screen orientation is in Portrait mode
+         * @name isLandscape
+         * @memberOf me.device
+         * @function
+         * @return {Boolean}
+         */
+        api.isLandscape = function () {
+            return me.device.getScreenOrientation().includes("landscape");
         };
 
         /**
@@ -782,9 +869,8 @@
          */
         get: function () {
             if (me.device.hasFullscreenSupport) {
-                var el = me.agent.prefixed("fullscreenElement", document) ||
-                         document.mozFullScreenElement;
-                return (el === me.video.getWrapper());
+                return !!(me.agent.prefixed("fullscreenElement", document) ||
+                    document.mozFullScreenElement);
             } else {
                 return false;
             }

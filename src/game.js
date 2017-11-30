@@ -1,6 +1,6 @@
 /**
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  */
 
@@ -76,7 +76,7 @@
         /**
          * when true, all objects will be added under the root world container<br>
          * when false, a `me.Container` object will be created for each
-         * corresponding `TMXObjectGroup`
+         * corresponding `TMXGroup`
          * default value : true
          * @public
          * @type {boolean}
@@ -116,6 +116,8 @@
          * @property {Boolean} [velocity=false] draw the entities velocity in the debug panel (if enabled)
          * @property {Boolean} [quadtree=false] draw the quadtree in the debug panel (if enabled)
          * @property {Boolean} [webgl=false] force the renderer to WebGL
+         * @property {Boolean} [debug=false] display the debug panel (if preloaded)
+         * @property {String} [debugToggleKey="s"] show/hide the debug panel (if preloaded)
          * @public
          * @type {Object}
          * @name HASH
@@ -151,6 +153,9 @@
                 api.world.name = "rootContainer";
                 api.world._root = true;
 
+                // to mimic the previous behavior
+                api.world.anchorPoint.set(0, 0);
+
                 // initialize the collision system (the quadTree mostly)
                 me.collision.init();
 
@@ -185,6 +190,10 @@
 
             // remove all objects
             api.world.destroy();
+
+
+            // reset the anchorPoint
+            api.world.anchorPoint.set(0, 0);
 
             // reset the viewport to zero ?
             if (api.viewport) {
@@ -327,27 +336,19 @@
                 // prepare renderer to draw a new frame
                 renderer.clear();
 
-                // save the current state
-                me.video.renderer.save();
-
-                // apply viewport transform if needed
-                if (!viewport.currentTransform.isIdentity()) {
-                    renderer.transform(viewport.currentTransform);
-                }
+                api.world.preDraw(renderer);
 
                 // update all objects,
                 // specifying the viewport as the rectangle area to redraw
                 api.world.draw(renderer, viewport);
 
-                // restore
-                renderer.restore();
+                api.world.postDraw(renderer);
 
                 // translate the world coordinates by default to screen coordinates
                 api.world.currentTransform.translate(translateX, translateY);
 
                 // draw the viewpor/camera effects
                 viewport.draw(renderer);
-
             }
 
             isDirty = false;

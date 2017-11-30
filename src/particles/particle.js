@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -31,10 +31,9 @@
             // Particle will always update
             this.alwaysUpdate = true;
 
-            // Particle will not act as a rednerable
-            // FIXME: This is probably not needed. It's a hack that tries to
-            // workaround performance issues within container.
-            this.isRenderable = false;
+            // Prevents particle to be added to the quadTree
+            // and to respond to events
+            this.isKinematic = true;
 
             // Cache the image reference
             this.image = emitter.image;
@@ -139,7 +138,9 @@
         /**
          * @ignore
          */
-        draw : function (renderer) {
+        preDraw : function (renderer) {
+
+            // restore is called in postDraw
             renderer.save();
 
             // particle alpha value
@@ -147,7 +148,12 @@
 
             // translate to the defined anchor point and scale it
             renderer.transform(this.currentTransform);
+        },
 
+        /**
+         * @ignore
+         */
+        draw : function (renderer) {
             var w = this.width, h = this.height;
             renderer.drawImage(
                 this.image,
@@ -156,8 +162,6 @@
                 -w / 2, -h / 2,
                 w, h
             );
-
-            renderer.restore();
         }
     });
 

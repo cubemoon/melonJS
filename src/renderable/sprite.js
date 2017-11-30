@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -9,7 +9,7 @@
     /**
      * An object to display a fixed or animated sprite on screen.
      * @class
-     * @extends me.Sprite
+     * @extends me.Renderable
      * @memberOf me
      * @constructor
      * @param {Number} x the x coordinates of the sprite object
@@ -18,6 +18,8 @@
      * @param {me.video.renderer.Texture|Image|String} settings.image reference to a texture, spritesheet image or to a texture atlas
      * @param {Number} [settings.framewidth] Width of a single frame within the spritesheet
      * @param {Number} [settings.frameheight] Height of a single frame within the spritesheet
+     * @param {Number} [settings.flipX] flip the sprite on the horizontal axis
+     * @param {Number} [settings.flipY] flip the sprite on the vertical axis
      * @param {me.Vector2d} [settings.anchorPoint={x:0.5, y:0.5}] Anchor point to draw the frame at (defaults to the center of the frame).
      * @example
      * // create a standalone sprite, with anchor in the center
@@ -82,19 +84,6 @@
             // animation frame delta
             this.dt = 0;
 
-            // keep track of when we flip
-            this._flip = {
-                lastX : false,
-                lastY : false
-            };
-
-            if (typeof (settings.flipX) !== "undefined") {
-                this._flip.lastX(!!settings.flipX);
-            }
-            if (typeof (settings.flipY) !== "undefined") {
-                this._flip.lastY(!!settings.flipY);
-            }
-
             // flicker settings
             this._flicker = {
                 isFlickering : false,
@@ -152,6 +141,15 @@
                 this.current.height
             ]);
 
+            // apply flip flags if specified
+            if (typeof (settings.flipX) !== "undefined") {
+                this.flipX(!!settings.flipX);
+            }
+            if (typeof (settings.flipY) !== "undefined") {
+                this.flipY(!!settings.flipY);
+            }
+
+
             // set the default rotation angle is defined in the settings
             // * WARNING: rotating sprites decreases performance with Canvas Renderer
             if (typeof (settings.rotation) !== "undefined") {
@@ -168,6 +166,9 @@
                 // set as default
                 this.setCurrentAnimation("default");
             }
+
+            // enable currentTransform for me.Sprite based objects
+            this.autoTransform = true;
         },
 
         /**
@@ -204,38 +205,6 @@
             else if (!this._flicker.isFlickering) {
                 this._flicker.callback = callback;
                 this._flicker.isFlickering = true;
-            }
-        },
-
-        /**
-         * Flip object on horizontal axis
-         * @name flipX
-         * @memberOf me.Sprite
-         * @function
-         * @param {Boolean} flip enable/disable flip
-         */
-        flipX : function (flip) {
-            if (flip !== this._flip.lastX) {
-                console.warn("Deprecated: me.Sprite.flipX");
-                this._flip.lastX = flip;
-                // invert the scale.x value
-                this.currentTransform.scaleX(-1);
-            }
-        },
-
-        /**
-         * Flip object on vertical axis
-         * @name flipY
-         * @memberOf me.Sprite
-         * @function
-         * @param {Boolean} flip enable/disable flip
-         */
-        flipY : function (flip) {
-            if (flip !== this._flip.lastY) {
-                console.warn("Deprecated: me.Sprite.flipY");
-                this._flip.lastY = flip;
-                // invert the scale.x value
-                this.currentTransform.scaleY(-1);
             }
         },
 
@@ -448,6 +417,8 @@
             Object.assign(this.current, frame);
             // XXX this should not be overwritten
             this.current.name = name;
+            this.width = frame.width;
+            this.height = frame.height;
             // set global anchortPoint if defined
             if (frame.anchorPoint) {
                 this.anchorPoint.setV(frame.anchorPoint);
@@ -478,13 +449,7 @@
         },
 
         /**
-         * update the animation<br>
-         * this is automatically called by the game manager {@link me.game}
-         * @name update
-         * @memberOf me.Sprite
-         * @function
-         * @protected
-         * @param {Number} dt time since the last update in milliseconds.
+         * @ignore
          */
         update : function (dt) {
             var result = false;
@@ -534,15 +499,8 @@
         },
 
         /**
-         * object draw<br>
-         * not to be called by the end user<br>
-         * called by the game manager on each game loop
-         * @name draw
-         * @memberOf me.Sprite
-         * @function
-         * @protected
-         * @param {me.CanvasRenderer|me.WebGLRenderer} renderer a renderer object
-         **/
+         * @ignore
+         */
         draw : function (renderer) {
             // do nothing if we are flickering
             if (this._flicker.isFlickering) {
@@ -566,22 +524,6 @@
             var frame_offset = frame.offset;
             var g_offset = this.offset;
 
-            // save context
-            renderer.save();
-
-            // sprite alpha value
-            renderer.setGlobalAlpha(renderer.globalAlpha() * this.getOpacity());
-
-            // apply the renderable transformation matrix
-            if (!this.currentTransform.isIdentity()) {
-                renderer.transform(this.currentTransform);
-            }
-
-            // translate to the defined anchor point
-            renderer.translate(
-                - ( w * this.anchorPoint.x ),
-                - ( h * this.anchorPoint.y )
-            );
 
             // remove image's TexturePacker/ShoeBox rotation
             if (frame.angle !== 0) {
@@ -600,9 +542,6 @@
                 xpos, ypos,                  // dx,dy
                 w, h                         // dw,dh
             );
-
-            // restore context
-            renderer.restore();
         }
     });
 

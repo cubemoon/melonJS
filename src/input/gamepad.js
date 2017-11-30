@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org/
  *
  */
@@ -264,7 +264,7 @@
                 }
                 // normalize value into a [-1, 1] range value (treat 0 as positive)
                 var range = Math.sign(value) || 1;
-                if (!last[range]) {
+                if (last[range].keyCode === 0) {
                     return;
                 }
                 var pressed = (Math.abs(value) >= (deadzone + Math.abs(last[range].threshold)));
@@ -273,9 +273,16 @@
 
                 // Edge detection
                 if (!last[range].pressed && pressed) {
+                    // Release the opposite direction, if necessary
+                    if (last[-range].pressed) {
+                        api._keyup(e, last[-range].keyCode, mapped_axis + 256);
+                        last[-range].value = 0;
+                        last[-range].pressed = false;
+                    }
+
                     api._keydown(e, last[range].keyCode, mapped_axis + 256);
                 }
-                else if ((last[range].pressed || (last[-range] && last[-range].pressed)) && !pressed) {
+                else if ((last[range].pressed || last[-range].pressed) && !pressed) {
                     range = last[range].pressed ? range : -range;
                     api._keyup(e, last[range].keyCode, mapped_axis + 256);
                 }
@@ -372,17 +379,15 @@
      * @public
      * @function
      * @param {Number} index Gamepad index
-     * @param {me.input.GAMEPAD.BUTTONS|Object} button id (deprecated) or definition as below
+     * @param {Object} button Button/Axis definition
      * @param {String} button.type "buttons" or "axes"
      * @param {me.input.GAMEPAD.BUTTONS|me.input.GAMEPAD.AXES} button.code button or axis code id
-     * @param {String} [button.threshold] value indicating when the axis should trigger the keycode (e.g. -0.5 or 0.5)
+     * @param {Number} [button.threshold=1] value indicating when the axis should trigger the keycode (e.g. -0.5 or 0.5)
      * @param {me.input.KEY} keyCode
      * @example
      * // enable the keyboard
      * me.input.bindKey(me.input.KEY.X, "shoot");
      * ...
-     * // map the lower face button on the first gamepad to the X key (deprecated use)
-     * me.input.bindGamepad(0, me.input.GAMEPAD.BUTTONS.FACE_1, me.input.KEY.X);
      * // map the lower face button on the first gamepad to the X key
      * me.input.bindGamepad(0, {type:"buttons", code: me.input.GAMEPAD.BUTTONS.FACE_1}, me.input.KEY.X);
      * // map the left axis value on the first gamepad to the LEFT key
@@ -392,15 +397,6 @@
         // Throw an exception if no action is defined for the specified keycode
         if (!api._KeyBinding[keyCode]) {
             throw new me.Error("no action defined for keycode " + keyCode);
-        }
-
-        // for backward compatiblity with 3.0.x
-        if (typeof (button) !== "object") {
-            button = {
-                type : "buttons",
-                code : button
-            };
-            console.warn("Deprecated: me.input.bindGamepad parameteres have changed");
         }
 
         // Allocate bindings if not defined
@@ -426,11 +422,22 @@
         } else if (button.type === "axes") {
             // normalize threshold into a value that can represent both side of the axis
             var range = (Math.sign(button.threshold) || 1);
-            // axes are defined using a double []
+            // axes are defined using two objects; one for negative and one for positive
             if (!binding[button.code]) {
                 binding[button.code] = {};
             }
-            binding[button.code][range] = mapping;
+            var axes = binding[button.code];
+            axes[range] = mapping;
+
+            // Ensure the opposite axis exists
+            if (!axes[-range]) {
+                axes[-range] = {
+                    "keyCode" : 0,
+                    "value" : 0,
+                    "pressed" : false,
+                    "threshold" : -range
+                };
+            }
         }
     };
 

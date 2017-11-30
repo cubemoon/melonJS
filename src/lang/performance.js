@@ -1,23 +1,12 @@
 /**
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  */
 
 // define window.performance if undefined
 if (typeof window.performance === "undefined") {
     window.performance = {};
-}
-
-if (typeof Date.now === "undefined") {
-    /**
-     * provide a replacement for browser not
-     * supporting Date.now (JS 1.5)
-     * @ignore
-     */
-    Date.now = function () {
-        return new Date().getTime();
-    };
 }
 
 if (!window.performance.now) {

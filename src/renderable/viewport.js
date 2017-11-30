@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -85,6 +85,9 @@
 
             // set a default deadzone
             this.setDeadzone(this.width / 6, this.height / 6);
+
+            // for backward "compatiblity" (in terms of behavior)
+            this.anchorPoint.set(0, 0);
         },
 
         // -- some private function ---
@@ -129,10 +132,7 @@
             this.pos.y = y || 0;
 
             // reset the target
-            this.target = null;
-
-            // reset default axis value for follow
-            this.follow_axis = null;
+            this.unfollow();
 
             // reset the transformation matrix
             this.currentTransform.identity();
@@ -235,6 +235,17 @@
             );
             // force a camera update
             this.updateTarget();
+        },
+
+        /**
+         * unfollow the current target
+         * @name unfollow
+         * @memberOf me.Viewport
+         * @function
+         */
+        unfollow : function () {
+            this.target = null;
+            this.follow_axis = this.AXIS.NONE;
         },
 
         /**

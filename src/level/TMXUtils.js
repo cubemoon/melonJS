@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  * Tile QT 0.7.x format
@@ -164,6 +164,7 @@
                 case "imagelayer":
                 case "layer":
                 case "objectgroup":
+                case "group":
                     var layer = api.parse(item);
                     layer.type = (nodeName === "layer" ? "tilelayer" : nodeName);
                     if (layer.image) {

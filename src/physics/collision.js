@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  * Separating Axis Theorem implementation, based on the SAT.js library by Jim Riecken <jimr@jimr.ca>
@@ -388,6 +388,7 @@
          */
         api.shouldCollide = function (a, b) {
             return (
+                a.isKinematic !== true && b.isKinematic !== true &&
                 a.body && b.body &&
                 (a.body.collisionMask & b.body.collisionType) !== 0 &&
                 (a.body.collisionType & b.body.collisionMask) !== 0

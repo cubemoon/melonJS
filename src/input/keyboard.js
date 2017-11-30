@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org/
  *
  */
@@ -47,7 +47,7 @@
      */
     api._keydown = function (e, keyCode, mouseButton) {
 
-        keyCode = keyCode || e.keyCode || e.which;
+        keyCode = keyCode || e.keyCode || e.button;
         var action = api._KeyBinding[keyCode];
 
         // publish a message for keydown event
@@ -67,7 +67,7 @@
             }
             // prevent event propagation
             if (preventDefaultForKeys[keyCode]) {
-                return api._preventDefault(e);
+                return api._preventDefaultFn(e);
             }
             else {
                 return true;
@@ -83,7 +83,7 @@
      * @ignore
      */
     api._keyup = function (e, keyCode, mouseButton) {
-        keyCode = keyCode || e.keyCode || e.which;
+        keyCode = keyCode || e.keyCode || e.button;
         var action = api._KeyBinding[keyCode];
 
         // publish a message for keydown event
@@ -101,7 +101,7 @@
 
             // prevent event propagation
             if (preventDefaultForKeys[keyCode]) {
-                return api._preventDefault(e);
+                return api._preventDefaultFn(e);
             }
             else {
                 return true;
@@ -293,6 +293,8 @@
         "F11" : 122,
         /** @memberOf me.input.KEY */
         "F12" : 123,
+        /** @memberOf me.input.KEY */
+        "TILDE" : 126,
         /** @memberOf me.input.KEY */
         "NUM_LOCK" : 144,
         /** @memberOf me.input.KEY */

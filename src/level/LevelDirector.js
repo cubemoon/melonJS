@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org
  *
  */
@@ -90,6 +90,9 @@
             // reset the GUID generator
             // and pass the level id as parameter
             me.utils.resetGUID(levelId, level.nextobjectid);
+
+            // Tiled use 0,0 anchor coordinates
+            container.anchorPoint.set(0, 0);
 
             // add all level elements to the target container
             level.addTo(container, flatten);

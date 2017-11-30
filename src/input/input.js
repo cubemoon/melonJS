@@ -1,6 +1,6 @@
 /*
  * MelonJS Game Engine
- * Copyright (C) 2011 - 2017, Olivier Biot, Jason Oster, Aaron McLeod
+ * Copyright (C) 2011 - 2017 Olivier Biot
  * http://www.melonjs.org/
  *
  */
@@ -21,7 +21,7 @@
          * prevent event propagation
          * @ignore
          */
-        api._preventDefault = function (e) {
+        api._preventDefaultFn = function (e) {
             // stop event propagation
             if (e.stopPropagation) {
                 e.stopPropagation();
@@ -45,8 +45,7 @@
          */
 
         /**
-         * Global flag to specify if melonJS should prevent default browser action on registered key events <br>
-         * This is also configurable per key through the bindKey function
+         * Global flag to specify if melonJS should prevent all default browser action on registered events.
          * default : true
          * @public
          * @type Boolean
